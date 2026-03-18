@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-yellow-50 text-gray-900 antialiased;
+  }
+  *:focus-visible {
+    outline: 2px solid #ca8a04;
+    outline-offset: 2px;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.5;
+  }
+}

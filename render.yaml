@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: harmsun-pyoraily-api
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_PATH
+        value: /opt/render/project/data/pyoraily.db
+      - key: CLIENT_URL
+        value: https://harmsun-pyoraily.netlify.app
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: pyoraily-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
