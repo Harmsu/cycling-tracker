@@ -50,7 +50,6 @@ router.get('/summary', (req, res) => {
   ).get(year).days || 0;
 
   // Kuinka monta viikkoa / kuukautta on kulunut tässä vuodessa
-  const now = finNow();
   const isCurrentYear = now.getFullYear() === Number(year);
   const jan1 = new Date(Number(year), 0, 1);
 
