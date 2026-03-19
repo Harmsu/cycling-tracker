@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const { generateToken, requireAuth, validateUser } = require('../auth');
-const db = require('../database');
+const { pool } = require('../database');
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -15,9 +15,9 @@ router.post('/login', async (req, res) => {
   res.json({ token: generateToken() });
 });
 
-router.get('/me', requireAuth, (_req, res) => {
-  const row = db.prepare("SELECT value FROM config WHERE key='username'").get();
-  res.json({ username: row?.value || 'admin' });
+router.get('/me', requireAuth, async (_req, res) => {
+  const { rows } = await pool.query("SELECT value FROM config WHERE key='username'");
+  res.json({ username: rows[0]?.value || 'admin' });
 });
 
 router.post('/change-password', requireAuth, async (req, res) => {
@@ -25,11 +25,11 @@ router.post('/change-password', requireAuth, async (req, res) => {
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Molemmat salasanat vaaditaan' });
   }
-  const usernameRow = db.prepare("SELECT value FROM config WHERE key='username'").get();
-  const valid = await validateUser(usernameRow?.value, currentPassword);
+  const { rows } = await pool.query("SELECT value FROM config WHERE key='username'");
+  const valid = await validateUser(rows[0]?.value, currentPassword);
   if (!valid) return res.status(401).json({ error: 'Väärä nykyinen salasana' });
   const hash = await bcrypt.hash(newPassword, 12);
-  db.prepare("UPDATE config SET value=? WHERE key='password_hash'").run(hash);
+  await pool.query("UPDATE config SET value=$1 WHERE key='password_hash'", [hash]);
   res.json({ success: true });
 });
 

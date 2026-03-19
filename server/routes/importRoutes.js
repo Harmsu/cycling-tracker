@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const db = require('../database');
+const { pool } = require('../database');
 const { requireAuth } = require('../auth');
 const multer = require('multer');
 
@@ -10,7 +10,7 @@ const upload = multer({
 
 router.use(requireAuth);
 
-router.post('/csv', upload.single('file'), (req, res) => {
+router.post('/csv', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Tiedosto puuttuu' });
 
   const content = req.file.buffer.toString('utf-8');
@@ -65,7 +65,7 @@ router.post('/csv', upload.single('file'), (req, res) => {
       continue;
     }
 
-    const bike = bikeIdx >= 0 ? (parts[bikeIdx]?.trim().replace(/['"]/g, '') || 'Pyörä') : 'Pyörä';
+    const bike = bikeIdx >= 0 ? (parts[bikeIdx]?.trim().replace(/['"]/g, '') || 'Vanha sähkäri') : 'Vanha sähkäri';
     const route = routeIdx >= 0 ? (parts[routeIdx]?.trim().replace(/['"]/g, '') || null) : null;
 
     toInsert.push({ date: dateStr, km, bike, route: route || null });
@@ -74,25 +74,31 @@ router.post('/csv', upload.single('file'), (req, res) => {
   let imported = 0;
   let skipped = 0;
 
-  const insertStmt = db.prepare('INSERT INTO rides (date, km, bike, route) VALUES (?, ?, ?, ?)');
-  const checkStmt = db.prepare('SELECT id FROM rides WHERE date=? AND ABS(km-?)<=0.01 AND bike=?');
-
+  const client = await pool.connect();
   try {
-    db.exec('BEGIN');
+    await client.query('BEGIN');
     for (const row of toInsert) {
-      const existing = checkStmt.get(row.date, row.km, row.bike);
-      if (existing) {
+      const { rows: existing } = await client.query(
+        'SELECT id FROM rides WHERE date=$1 AND ABS(km-$2)<=0.01 AND bike=$3',
+        [row.date, row.km, row.bike]
+      );
+      if (existing.length) {
         skipped++;
       } else {
-        insertStmt.run(row.date, row.km, row.bike, row.route);
+        await client.query(
+          'INSERT INTO rides (date, km, bike, route) VALUES ($1, $2, $3, $4)',
+          [row.date, row.km, row.bike, row.route]
+        );
         imported++;
       }
     }
-    db.exec('COMMIT');
+    await client.query('COMMIT');
     res.json({ imported, skipped, errors });
   } catch (err) {
-    db.exec('ROLLBACK');
+    await client.query('ROLLBACK');
     res.status(500).json({ error: 'Tuonti epäonnistui: ' + err.message });
+  } finally {
+    client.release();
   }
 });
 

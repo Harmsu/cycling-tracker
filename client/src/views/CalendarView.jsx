@@ -86,6 +86,19 @@ export default function CalendarView() {
     if (selectedDate) await fetchDay(selectedDate);
   }
 
+  const _td = new Date();
+  const todayStr = `${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
+
+  async function quickAdd(preset) {
+    const date = selectedDate || todayStr;
+    await api.createRide({ date, ...preset });
+    if (!selectedDate) {
+      setSelectedDate(date);
+    }
+    await fetchMonth();
+    await fetchDay(date);
+  }
+
   async function handleDelete(id) {
     if (!confirm('Poistetaanko ajo?')) return;
     await api.deleteRide(id);
@@ -93,14 +106,22 @@ export default function CalendarView() {
     if (selectedDate) await fetchDay(selectedDate);
   }
 
-  const _td = new Date();
-  const todayStr = `${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
-
   return (
     <div className="flex flex-col md:flex-row h-full">
       {/* Calendar panel */}
-      <div className="flex-1 p-4 md:p-6 max-w-lg mx-auto w-full md:max-w-none">
-        {/* Header */}
+      <div className="flex-1 p-4 pt-12 md:p-6 max-w-lg mx-auto w-full md:max-w-none">
+        {/* Year selector */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <button onClick={() => setYear(y => y - 1)} className="text-gray-400 hover:text-gray-600 px-2 py-0.5 rounded">
+            ‹ {year - 1}
+          </button>
+          <span className="text-green-700 font-semibold text-sm">{year}</span>
+          <button onClick={() => setYear(y => y + 1)} className="text-gray-400 hover:text-gray-600 px-2 py-0.5 rounded">
+            {year + 1} ›
+          </button>
+        </div>
+
+        {/* Month navigation */}
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={prevMonth}
@@ -110,14 +131,10 @@ export default function CalendarView() {
               <polyline points="15,18 9,12 15,6" />
             </svg>
           </button>
-
           <div className="text-center">
-            <h1 className="text-lg font-bold text-gray-900">
-              {MONTH_NAMES[month]} {year}
-            </h1>
+            <h1 className="text-lg font-bold text-gray-900">{MONTH_NAMES[month]} {year}</h1>
             {loading && <p className="text-xs text-gray-400">Ladataan...</p>}
           </div>
-
           <button
             onClick={nextMonth}
             className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
@@ -128,17 +145,6 @@ export default function CalendarView() {
           </button>
         </div>
 
-        {/* Year selector */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <button onClick={() => setYear(y => y - 1)} className="text-gray-400 hover:text-gray-600 px-2 py-0.5 rounded">
-            ‹ {year - 1}
-          </button>
-          <span className="text-green-700 font-semibold text-sm">{year}</span>
-          <button onClick={() => setYear(y => y + 1)} className="text-gray-400 hover:text-gray-600 px-2 py-0.5 rounded">
-            {year + 1} ›
-          </button>
-        </div>
-
         <CalendarGrid
           year={year}
           month={month}
@@ -146,7 +152,14 @@ export default function CalendarView() {
           onDayClick={handleDayClick}
         />
 
-        <div className="mt-5 flex justify-center">
+        <div className="mt-5 flex justify-center items-center gap-3">
+          <button
+            onClick={() => quickAdd({ km: 1.1, bike: 'Vanha sähkäri', route: 'Prisma' })}
+            title={`Kauppa — 1.1 km${selectedDate ? '' : ' (tänään)'}`}
+            className="w-14 h-14 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold text-xs transition-colors shadow-sm border border-amber-200 flex items-center justify-center"
+          >
+            Kauppa
+          </button>
           <button
             onClick={() => {
               setSelectedDate(todayStr);
@@ -161,6 +174,13 @@ export default function CalendarView() {
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Lisää tänään
+          </button>
+          <button
+            onClick={() => quickAdd({ km: 3.4, bike: 'Vanha sähkäri', route: 'Uimahalli' })}
+            title={`Uimahalli — 3.4 km${selectedDate ? '' : ' (tänään)'}`}
+            className="w-14 h-14 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold text-xs transition-colors shadow-sm border border-blue-200 flex items-center justify-center"
+          >
+            Uimahalli
           </button>
         </div>
       </div>

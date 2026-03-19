@@ -6,7 +6,7 @@ export default function RideForm({ date, ride, onSave, onCancel }) {
   const [form, setForm] = useState({
     date: date || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })(),
     km: '',
-    bike: 'Punainen Paholainen',
+    bike: 'Vanha sähkäri',
     route: '',
   });
   const [saving, setSaving] = useState(false);

@@ -1,11 +1,12 @@
 const MONTH_NAMES_SHORT = ['Tam', 'Hel', 'Maa', 'Huh', 'Tou', 'Kes', 'Hei', 'Elo', 'Syy', 'Lok', 'Mar', 'Jou'];
 
 function getColor(km) {
-  if (km <= 0) return '#1f2937'; // gray-800
-  if (km < 20) return '#14532d'; // green-900
-  if (km < 50) return '#166534'; // green-800
-  if (km < 100) return '#16a34a'; // green-600
-  return '#eab308'; // yellow-500
+  if (km <= 0) return '#ffffff'; // white = ei ajoa
+  if (km < 10) return '#fefce8'; // yellow-50
+  if (km < 20) return '#fef08a'; // yellow-200
+  if (km < 40) return '#bbf7d0'; // green-200
+  if (km < 70) return '#4ade80'; // green-400
+  return '#16a34a'; // green-600
 }
 
 export default function HeatmapGrid({ data, year }) {
@@ -84,8 +85,8 @@ export default function HeatmapGrid({ data, year }) {
               height={cellSize}
               rx={2}
               fill={day.inYear ? getColor(day.km) : 'transparent'}
-              stroke={day.isToday ? '#22c55e' : 'none'}
-              strokeWidth={1.5}
+              stroke={day.isToday ? '#22c55e' : day.inYear ? '#e5e7eb' : 'none'}
+              strokeWidth={day.isToday ? 1.5 : 0.5}
             >
               {day.inYear && (
                 <title>{day.date}: {day.km > 0 ? `${day.km.toFixed(1)} km` : 'ei ajoa'}</title>
@@ -97,13 +98,13 @@ export default function HeatmapGrid({ data, year }) {
 
       {/* Legend */}
       <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-        <span>Vähemmän</span>
-        {[0, 10, 30, 70, 120].map((km, i) => (
+        <span>Ei ajoa</span>
+        {[0, 5, 15, 30, 55, 80].map((km, i) => (
           <svg key={i} width={11} height={11}>
-            <rect width={11} height={11} rx={2} fill={getColor(km)} />
+            <rect width={11} height={11} rx={2} fill={getColor(km)} stroke="#e5e7eb" strokeWidth={0.5} />
           </svg>
         ))}
-        <span>Enemmän (keltainen = 100+ km)</span>
+        <span>70+ km</span>
       </div>
     </div>
   );

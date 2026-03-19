@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { initDB } = require('./database');
 
 const authRoutes = require('./routes/authRoutes');
 const rideRoutes = require('./routes/rideRoutes');
@@ -30,6 +31,9 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Sisäinen palvelinvirhe' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Palvelin käynnissä portissa ${PORT}`);
+initDB().then(() => {
+  app.listen(PORT, () => console.log(`Palvelin käynnissä portissa ${PORT}`));
+}).catch(err => {
+  console.error('Tietokannan alustus epäonnistui:', err);
+  process.exit(1);
 });
