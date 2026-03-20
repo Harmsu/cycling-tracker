@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { pool } = require('../database');
+const { db } = require('../database');
 const { requireAuth } = require('../auth');
 const multer = require('multer');
 
@@ -10,7 +10,7 @@ const upload = multer({
 
 router.use(requireAuth);
 
-router.post('/csv', upload.single('file'), async (req, res) => {
+router.post('/csv', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Tiedosto puuttuu' });
 
   const content = req.file.buffer.toString('utf-8');
@@ -74,31 +74,25 @@ router.post('/csv', upload.single('file'), async (req, res) => {
   let imported = 0;
   let skipped = 0;
 
-  const client = await pool.connect();
+  const checkStmt = db.prepare('SELECT id FROM rides WHERE date=? AND ABS(km-?)<=0.01 AND bike=?');
+  const insertStmt = db.prepare('INSERT INTO rides (date, km, bike, route) VALUES (?, ?, ?, ?)');
+
   try {
-    await client.query('BEGIN');
+    db.exec('BEGIN');
     for (const row of toInsert) {
-      const { rows: existing } = await client.query(
-        'SELECT id FROM rides WHERE date=$1 AND ABS(km-$2)<=0.01 AND bike=$3',
-        [row.date, row.km, row.bike]
-      );
-      if (existing.length) {
+      const existing = checkStmt.get(row.date, row.km, row.bike);
+      if (existing) {
         skipped++;
       } else {
-        await client.query(
-          'INSERT INTO rides (date, km, bike, route) VALUES ($1, $2, $3, $4)',
-          [row.date, row.km, row.bike, row.route]
-        );
+        insertStmt.run(row.date, row.km, row.bike, row.route);
         imported++;
       }
     }
-    await client.query('COMMIT');
+    db.exec('COMMIT');
     res.json({ imported, skipped, errors });
   } catch (err) {
-    await client.query('ROLLBACK');
+    db.exec('ROLLBACK');
     res.status(500).json({ error: 'Tuonti epäonnistui: ' + err.message });
-  } finally {
-    client.release();
   }
 });
 
