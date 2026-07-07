@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { db } = require('./database');
+const { pool } = require('./database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-vaihda-tuotannossa';
 const JWT_EXPIRES = '30d';
@@ -28,8 +28,10 @@ function requireAuth(req, res, next) {
 }
 
 async function validateUser(username, password) {
-  const usernameRow = db.prepare("SELECT value FROM config WHERE key='username'").get();
-  const hashRow = db.prepare("SELECT value FROM config WHERE key='password_hash'").get();
+  const { rows: usernameRows } = await pool.query("SELECT value FROM config WHERE key='username'");
+  const { rows: hashRows } = await pool.query("SELECT value FROM config WHERE key='password_hash'");
+  const usernameRow = usernameRows[0];
+  const hashRow = hashRows[0];
   if (!usernameRow || !hashRow) return false;
   if (usernameRow.value !== username) return false;
   return bcrypt.compare(password, hashRow.value);
