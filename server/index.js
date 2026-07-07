@@ -8,6 +8,7 @@ const rideRoutes = require('./routes/rideRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const goalRoutes = require('./routes/goalRoutes');
 const importRoutes = require('./routes/importRoutes');
+const exportRoutes = require('./routes/exportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +24,7 @@ app.use('/api/rides', rideRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/goal', goalRoutes);
 app.use('/api/import', importRoutes);
+app.use('/api/export', exportRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
