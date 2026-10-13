@@ -13,7 +13,7 @@ router.use(requireAuth);
 router.post('/csv', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Tiedosto puuttuu' });
 
-  const content = req.file.buffer.toString('utf-8');
+  const content = req.file.buffer.toString('utf-8').replace(/^\uFEFF/, '');
   const lines = content.split(/\r?\n/).filter(l => l.trim());
 
   if (lines.length < 2) {

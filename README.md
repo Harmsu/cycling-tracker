@@ -30,6 +30,7 @@ Henkilökohtainen pyöräilykilometrien seurantasovellus. Kirjaa päivittäiset 
 - **Ennätykset** — pisin ajo, paras viikko/kuukausi/vuosi, suoritusputki
 - **Vuositavoite** — aseta km-tavoite ja seuraa edistymistä
 - **CSV-tuonti** — tuo vanhoja ajoja CSV-tiedostosta
+- **CSV-vienti / varmuuskopiointi** — lataa kaikki ajot CSV:nä asetuksista
 - **Salasanan vaihto** — asetuksista
 
 ---
@@ -126,3 +127,16 @@ Tuettavat sarakkeet:
 | Reitti | `reitti`, `route`, `kuvaus` |
 
 Päivämääräformaatti: `YYYY-MM-DD`
+
+---
+
+## CSV-vienti (varmuuskopiointi)
+
+Asetukset-näkymän **Vie CSV** -nappi lataa kaikki ajot tiedostoon `pyorailyt-YYYY-MM-DD.csv`
+(`GET /api/export/csv`, vaatii kirjautumisen).
+
+Sarakkeet ovat samat kuin CSV-tuonnissa (`pvm,km,pyörä,reitti`), joten varmuuskopio voidaan
+tuoda suoraan takaisin historianäkymän CSV-tuonnilla. Tuonti ohittaa duplikaatit
+(sama pvm + km + pyörä), joten saman tiedoston tuonti ei monista ajoja.
+
+Tiedosto alkaa UTF-8 BOMilla, jotta Excel näyttää ä/ö-kirjaimet oikein.
