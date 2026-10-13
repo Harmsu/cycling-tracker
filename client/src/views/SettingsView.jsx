@@ -14,6 +14,9 @@ export default function SettingsView() {
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
 
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
   function setField(field, value) {
     setPwForm(f => ({ ...f, [field]: value }));
   }
@@ -33,6 +36,27 @@ export default function SettingsView() {
       setPwError(err.message);
     } finally {
       setPwLoading(false);
+    }
+  }
+
+  async function handleExportCsv() {
+    setExporting(true);
+    setExportError('');
+    try {
+      const result = await api.exportCsv();
+      if (!result) return;
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err.message);
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -60,6 +84,24 @@ export default function SettingsView() {
           Vuositavoite {currentYear}
         </h2>
         <GoalBarLoader year={currentYear} />
+      </div>
+
+      <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          Varmuuskopiointi
+        </h2>
+        <p className="text-xs text-gray-400 mb-4">
+          Lataa kaikki ajot CSV-tiedostona. Tiedosto kelpaa suoraan takaisin historianäkymän
+          CSV-tuontiin.
+        </p>
+        <button
+          onClick={handleExportCsv}
+          disabled={exporting}
+          className="w-full py-2.5 border border-green-600 text-green-700 rounded-lg font-medium text-sm hover:bg-green-50 disabled:opacity-50"
+        >
+          {exporting ? 'Viedään...' : 'Vie CSV'}
+        </button>
+        {exportError && <p className="text-red-500 text-sm mt-2">{exportError}</p>}
       </div>
 
       <div className="bg-white rounded-xl p-5 border border-gray-200">

@@ -54,6 +54,25 @@ export const api = {
   updateGoal: (year, goalKm) =>
     request('/goal', { method: 'PUT', body: JSON.stringify({ year, goalKm }) }),
 
+  // Export
+  exportCsv: async () => {
+    const token = getToken();
+    const res = await fetch(`${BASE_URL}/export/csv`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return null;
+    }
+    if (!res.ok) throw new Error('Vienti epäonnistui');
+
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    return { blob: await res.blob(), filename: match ? match[1] : 'pyorailyt.csv' };
+  },
+
   // Import
   importCsv: (file) => {
     const form = new FormData();
